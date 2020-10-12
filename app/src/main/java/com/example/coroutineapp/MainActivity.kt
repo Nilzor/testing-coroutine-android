@@ -6,15 +6,14 @@ import android.os.StrictMode
 import android.util.Log
 import android.widget.ProgressBar
 import android.widget.TextView
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import retrofit2.awaitResponse
 import kotlin.coroutines.CoroutineContext
 
 class MainActivity : AppCompatActivity() {
 
     val mainScope = CoroutineScope(Dispatchers.Main)
+    val ioScope = CoroutineScope(Dispatchers.IO)
     val api = HttpBinApi.getApi()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -29,9 +28,38 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        runBlocking {
+            jobEntryPoint()
+        }
+        Log.d("zzz", "runBlocking done")
+    }
 
-        suspendingNetworkOnMain()
-        findViewById<ProgressBar>(R.id.progressBar)
+    fun jobEntryPoint() {
+        fireNonSuspendingOffThreadJob()
+        doOtherStuff()
+    }
+
+    fun fireNonSuspendingOffThreadJob() {
+        ioScope.launch {
+            delay(500)
+            Log.i("zzz", "fireNonSuspendingOffThreadJob")
+        }
+    }
+
+    suspend fun entryPoint() {
+        fireOffThreadJob().join() // join() makes us suspend until offThreadJob is done
+        doOtherStuff()
+    }
+
+    suspend fun fireOffThreadJob(): Job {
+        return ioScope.launch {
+            delay(500)
+            Log.d("zzz", "offThreadJob done")
+        }
+    }
+
+    private fun doOtherStuff() {
+        Log.d("zzz", "otherStuff done")
     }
 
     // this method fails with NetworkOnMainThreadException
