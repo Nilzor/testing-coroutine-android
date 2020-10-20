@@ -1,4 +1,4 @@
-package com.example.coroutineapp
+package com.example.coroutineapp.networking
 
 import retrofit2.Call
 import retrofit2.Retrofit
